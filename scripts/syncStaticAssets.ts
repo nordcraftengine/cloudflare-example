@@ -24,6 +24,7 @@ fs.rmdirSync(`${__dirname}/../dist`, { recursive: true })
 fs.mkdirSync(`${__dirname}/../dist`, { recursive: true })
 const projectFile = fs.readFileSync(`${__dirname}/../__project__/project.json`)
 const json = JSON.parse(projectFile.toString())
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { project, routes, components, files, styles, code } = splitRoutes(json)
 // Create a stylesheet for each component
 Object.entries(styles).forEach(([name, style]) => {
