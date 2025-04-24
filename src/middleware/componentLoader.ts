@@ -1,12 +1,12 @@
 import type { ProjectFiles } from '@toddledev/ssr/dist/ssr.types'
 import type { MiddlewareHandler } from 'hono'
 import type { HonoComponent, HonoEnv } from '../../hono'
-import { loadJsonFile } from './jsonLoader'
+import { loadJsFile } from './jsLoader'
 
 export const componentLoader =
   (name: string): MiddlewareHandler<HonoEnv<HonoComponent>> =>
   async (ctx, next) => {
-    const componentFile = await loadJsonFile<
+    const componentFile = await loadJsFile<
       ProjectFiles & { customCode: boolean }
     >(`./components/${name}.js`)
     const component = componentFile?.components?.[name]

@@ -1,9 +1,9 @@
-import { isPageComponent } from '@toddledev/core/dist/component/isPageComponent'
-import { matchPageForUrl } from '@toddledev/ssr/dist/routing/routing'
-import type { ProjectFiles } from '@toddledev/ssr/dist/ssr.types'
+import { isPageComponent } from '@nordcraft/core/dist/component/isPageComponent'
+import { matchPageForUrl } from '@nordcraft/ssr/dist/routing/routing'
+import type { ProjectFiles } from '@nordcraft/ssr/dist/ssr.types'
 import type { MiddlewareHandler } from 'hono'
 import type { HonoEnv, HonoPage, HonoRoutes } from '../../hono'
-import { loadJsonFile } from './jsonLoader'
+import { loadJsFile } from './jsLoader'
 
 export const pageLoader: MiddlewareHandler<
   HonoEnv<HonoRoutes & HonoPage>
@@ -14,7 +14,7 @@ export const pageLoader: MiddlewareHandler<
     components: ctx.var.routes.pages,
   })
   if (page) {
-    const pageContent = await loadJsonFile<
+    const pageContent = await loadJsFile<
       ProjectFiles & { customCode: boolean }
     >(`./components/${page.name}.js`)
     const component = pageContent?.components?.[page.name]

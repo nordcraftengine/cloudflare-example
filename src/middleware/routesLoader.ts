@@ -2,7 +2,7 @@ import type { RouteDeclaration } from '@toddledev/core/dist/component/component.
 import type { Route } from '@toddledev/ssr/dist/ssr.types'
 import { createMiddleware } from 'hono/factory'
 import type { HonoEnv, HonoRoutes } from '../../hono'
-import { loadJsonFile } from './jsonLoader'
+import { loadJsFile } from './jsLoader'
 
 export interface Routes {
   pages: Record<string, { name: string; route: RouteDeclaration }>
@@ -14,7 +14,7 @@ let routes: Routes | undefined
 export const routesLoader = createMiddleware<HonoEnv<HonoRoutes>>(
   async (ctx, next) => {
     if (!routes) {
-      routes = await loadJsonFile<Routes>('routes.js')
+      routes = await loadJsFile<Routes>('routes.js')
       if (!routes) {
         return ctx.text('Route declarations for project not found', {
           status: 404,
