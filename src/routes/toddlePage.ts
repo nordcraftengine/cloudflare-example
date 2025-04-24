@@ -11,42 +11,24 @@ import {
   renderHeadItems,
 } from '@nordcraft/ssr/dist/rendering/head'
 import { getCharset, getHtmlLanguage } from '@nordcraft/ssr/dist/rendering/html'
-import {
-  get404Page,
-  matchPageForUrl,
-  matchRouteForUrl,
-} from '@nordcraft/ssr/dist/routing/routing'
-import { hasCustomCode } from '@nordcraft/ssr/src/custom-code/codeRefs'
 import { removeTestData } from '@nordcraft/ssr/src/rendering/testData'
 import type { Context } from 'hono'
 import { html, raw } from 'hono/html'
-import type { HonoEnv } from '../../hono'
-import { routeHandler } from './routeHandler'
+import type { HonoEnv, HonoPage, HonoProject, HonoRoutes } from '../../hono'
 
-export const toddlePage = async (c: Context<HonoEnv>) => {
+export const toddlePage = async (
+  c: Context<HonoEnv<HonoProject & HonoRoutes & HonoPage>>,
+) => {
   const project = c.var.project
+  const files = c.var.files
+  const page = c.var.page
   const url = new URL(c.req.url)
-  // Prefer routes over pages in case of conflicts
-  const route = matchRouteForUrl({ url, routes: project.files.routes })
-  if (route) {
-    return routeHandler(c, route)
-  }
-  let page = matchPageForUrl({
-    url,
-    components: project.files.components,
-  })
-  if (!page) {
-    page = get404Page(project.files.components)
-    if (!page) {
-      return c.html('Page not found', { status: 404 })
-    }
-  }
   const formulaContext = getPageFormulaContext({
     component: page,
     branchName: 'main',
     req: c.req.raw,
     logErrors: true,
-    files: project.files,
+    files,
   })
   const language = getHtmlLanguage({
     pageInfo: page.route.info,
@@ -56,15 +38,14 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
 
   // Find the theme to use for the page
   const theme =
-    (project.files.themes
-      ? Object.values(project.files.themes)[0]
-      : project.files.config?.theme) ?? defaultTheme
+    (files.themes ? Object.values(files.themes)[0] : files.config?.theme) ??
+    defaultTheme
 
   // Get all included components on the page
   const includedComponents = takeIncludedComponents({
     root: page,
-    projectComponents: project.files.components,
-    packages: project.files.packages,
+    projectComponents: files.components,
+    packages: files.packages,
     includeRoot: true,
   })
 
@@ -73,8 +54,8 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
     getComponent: (name, packageName) => {
       const nodeLookupKey = [packageName, name].filter(isDefined).join('/')
       const component = packageName
-        ? project.files.packages?.[packageName]?.components[name]
-        : project.files.components[name]
+        ? files.packages?.[packageName]?.components[name]
+        : files.components[name]
       if (!component) {
         console.warn(`Unable to find component ${nodeLookupKey} in files`)
         return undefined
@@ -84,8 +65,8 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
     },
     packageName: undefined,
     globalFormulas: {
-      formulas: project.files.formulas,
-      packages: project.files.packages,
+      formulas: files.formulas,
+      packages: files.packages,
     },
   })
   const head = renderHeadItems({
@@ -96,10 +77,10 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
       // Just to be explicit about where to grab the reset stylesheet from
       resetStylesheetPath: '/_static/reset.css',
       // This refers to the stylesheet endpoint declared in index.ts
-      pageStylesheetPath: `/.toddle/stylesheet/${page.name}.css`,
+      pageStylesheetPath: `/_static/${page.name.toLowerCase()}.css`,
       page: toddleComponent,
-      files: project.files,
-      project: project.project,
+      files: files,
+      project,
       context: formulaContext,
       theme,
     }),
@@ -109,7 +90,7 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
     formulaContext,
     env: formulaContext.env as ToddleServerEnv,
     req: c.req.raw,
-    files: project.files,
+    files: files,
     includedComponents,
     evaluateComponentApis: async (_) => ({
       // TODO: Show an example of how to evaluate APIs - potentially using an adapter
@@ -123,7 +104,7 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
 
   // Prepare the data to be passed to the client for hydration
   const toddleInternals: ToddleInternals = {
-    project: c.var.project.project.short_id,
+    project: project.short_id,
     branch: 'main',
     commit: 'unknown',
     pageState: formulaContext.data,
@@ -132,16 +113,13 @@ export const toddlePage = async (c: Context<HonoEnv>) => {
     isPageLoaded: false,
     cookies: Object.keys(formulaContext.env.request.cookies),
   }
-  const usesCustomCode = hasCustomCode(toddleComponent, c.var.project.files)
+  const usesCustomCode = files.customCode
   let codeImport = ''
   if (usesCustomCode) {
-    const customCodeSearchParams = new URLSearchParams([
-      ['entry', toddleComponent.name],
-    ])
     codeImport = `
             <script type="module">
               import { initGlobalObject, createRoot } from '/_static/page.main.esm.js';
-              import { loadCustomCode, formulas, actions } from '/.toddle/custom-code.js?${customCodeSearchParams.toString()}';
+              import { loadCustomCode, formulas, actions } from '/_static/cc_${toddleComponent.name}.js';
 
               window.__toddle = ${JSON.stringify(toddleInternals).replaceAll(
                 '</script>',
