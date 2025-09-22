@@ -1,6 +1,7 @@
 import { initIsEqual } from '@nordcraft/ssr/dist/rendering/equals'
 import type { ProjectFiles, ToddleProject } from '@nordcraft/ssr/dist/ssr.types'
 import { Hono } from 'hono'
+import { poweredBy } from 'hono/powered-by'
 import type { HonoEnv } from '../hono'
 import { proxyRequestHandler } from './routes/apiProxy'
 import { customCode } from './routes/customCode'
@@ -8,30 +9,35 @@ import { customElement } from './routes/customElement'
 import { favicon } from './routes/favicon'
 import { fontRouter } from './routes/font'
 import { manifest } from './routes/manifest'
+import { notFoundLoader } from './routes/notFoundLoader'
+import { pageHandler } from './routes/pageHandler'
 import { robots } from './routes/robots'
+import { routeHandler } from './routes/routeHandler'
 import { serviceWorker } from './routes/serviceWorker'
 import { sitemap } from './routes/sitemap'
 import { stylesheetHandler } from './routes/stylesheetHandler'
-import { toddlePage } from './routes/toddlePage'
 
 // Inject isEqual on globalThis
 // this is currently used by some builtin formulas
 initIsEqual()
 
 const app = new Hono<HonoEnv>()
+app.use(poweredBy({ serverName: 'Nordcraft' })) // 🌲🌲🌲
 
 // Keep the project reference in memory for future requests
-let project: { files: ProjectFiles; project: ToddleProject }
+let project:
+  | {
+      files: ProjectFiles & { customCode: boolean }
+      project: ToddleProject
+    }
+  | undefined
 // Load the project onto context to make it easier to use for other routes
 app.use(async (c, next) => {
   if (!project) {
     const path = `./project.json`
     try {
       const content = await import(path)
-      project = JSON.parse(content.default) as {
-        files: ProjectFiles
-        project: ToddleProject
-      }
+      project = JSON.parse(content.default)
     } catch (e) {
       console.error(
         'Unable to load project.json',
@@ -46,12 +52,6 @@ app.use(async (c, next) => {
   return next()
 })
 
-app.get('/sitemap.xml', sitemap)
-app.get('/robots.txt', robots)
-app.get('/manifest.json', manifest)
-app.get('/favicon.ico', favicon)
-app.get('/serviceWorker.js', serviceWorker)
-
 // Nordcraft specific endpoints/services on /.toddle/ subpath 👇
 app.route('/.toddle/fonts', fontRouter)
 app.get('/.toddle/stylesheet/:pageName{.+.css}', stylesheetHandler)
@@ -62,7 +62,18 @@ app.all(
 )
 app.get('/.toddle/custom-element/:filename{.+.js}', customElement)
 
+// Load a route if it matches the URL
+app.all('/*', routeHandler)
+
+app.get('/sitemap.xml', sitemap)
+app.get('/robots.txt', robots)
+app.get('/manifest.json', manifest)
+app.get('/favicon.ico', favicon)
+app.get('/serviceWorker.js', serviceWorker)
+
 // Treat all other requests as page requests
-app.get('/*', toddlePage)
+app.get('/*', pageHandler)
+
+app.notFound(notFoundLoader)
 
 export default app

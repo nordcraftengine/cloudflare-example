@@ -12,21 +12,21 @@
     "prettier:write": "prettier --write  '*.{json,js}' './**/*.{js,ts}'"
   },
   "dependencies": {
-    "@nordcraft/core": "1.0.1",
-    "@nordcraft/ssr": "1.0.1",
-    "hono": "4.7.7"
+    "@nordcraft/core": "1.0.48",
+    "@nordcraft/ssr": "1.0.48",
+    "hono": "4.9.8"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250424.0",
-    "@eslint/js": "9.25.1",
-    "@nordcraft/runtime": "1.0.1",
-    "@typescript-eslint/eslint-plugin": "8.31.0",
-    "@typescript-eslint/parser": "8.31.0",
+    "@cloudflare/workers-types": "4.20250922.0",
+    "@eslint/js": "9.36.0",
+    "@nordcraft/runtime": "1.0.48",
+    "@typescript-eslint/eslint-plugin": "8.44.0",
+    "@typescript-eslint/parser": "8.44.0",
     "eslint-plugin-inclusive-language": "2.2.1",
-    "eslint": "9.25.1",
-    "prettier-plugin-organize-imports": "4.1.0",
-    "prettier": "3.5.3",
-    "typescript": "5.8.3",
-    "wrangler": "4.13.0"
+    "eslint": "9.36.0",
+    "prettier-plugin-organize-imports": "4.3.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.2",
+    "wrangler": "4.38.0"
   }
 }

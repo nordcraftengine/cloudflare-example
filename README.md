@@ -1,5 +1,9 @@
 ## Cloudflare example application
 
+This example will not always be up to date with the latest Nordcraft features. Please refer to the [Nordcraft repository](https://github.com/nordcraftengine/nordcraft) for the most accurate and up-to-date information.
+
+Learn more about Nordcraft [here](https://nordcraft.com), and visit our [documentation](https://docs.nordcraft.com) for more information.
+
 ### Install
 
 ```sh
