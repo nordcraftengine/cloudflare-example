@@ -1,5 +1,5 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "toddle-worker-example"
+name = "nordcraft-worker-example"
 
 main = "dist/index.js"
 compatibility_date = "2025-02-05"
